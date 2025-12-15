@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cây Thông Noel 3D Tương Tác</title>
+    <title>Giáng Sinh Lung Linh - Merry Christmas</title>
     <style>
         body { 
             margin: 0; 
@@ -16,7 +16,7 @@
             height: 100vh;
         }
 
-        /* 4:3 Container */
+        /* Container */
         #canvas-wrapper {
             position: relative;
             box-shadow: 0 0 50px rgba(255, 215, 0, 0.1);
@@ -31,7 +31,7 @@
             display: block;
         }
         
-        /* Camera: Góc trên phải */
+        /* Camera góc trên phải */
         #video-container {
             position: absolute; top: 20px; right: 20px; width: 160px; height: 120px; z-index: 2;
             border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 8px; overflow: hidden;
@@ -48,6 +48,7 @@
             z-index: 10;
         }
 
+        /* Giao diện người dùng */
         #ui-layer {
             position: absolute; top: 30px; left: 30px; z-index: 3; pointer-events: none;
             color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.8);
@@ -68,6 +69,7 @@
         .highlight { color: #d4af37; font-weight: bold; }
         #status-text { margin-bottom: 10px; font-size: 1rem; color: #fff; font-weight: bold; }
 
+        /* Nút bấm */
         #upload-btn {
             pointer-events: auto; background: linear-gradient(45deg, #444, #666); border: 1px solid #888;
             color: #fff; padding: 10px 24px; cursor: pointer; text-transform: uppercase;
@@ -76,12 +78,15 @@
         }
         #upload-btn:hover, #share-btn:hover { background: #fff; color: #000; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
         #file-input { display: none; }
+        
         #share-btn {
             pointer-events: auto; background: linear-gradient(45deg, #d4af37, #aa8800); border: 1px solid #d4af37;
             color: #000; padding: 10px 24px; cursor: pointer; text-transform: uppercase;
             font-size: 0.8rem; margin-top: 10px; transition: 0.3s;
             letter-spacing: 1px; border-radius: 20px; display: none;
         }
+
+        /* Hộp thoại chia sẻ */
         #share-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;
@@ -118,7 +123,8 @@
 
         /* Class ẩn UI */
         .hide-ui #ui-layer, 
-        .hide-ui #upload-btn {
+        .hide-ui #upload-btn,
+        .hide-ui #share-btn {
             opacity: 0;
             pointer-events: none;
         }
@@ -140,7 +146,8 @@
     </script>
 </head>
 <body>
-    <audio id="bg-music" src="music.mp3" loop=""></audio>
+    <audio id="bg-music" src="https://incompetech.com/music/royalty-free/mp3-royaltyfree/Jingle%20Bells.mp3" loop></audio>
+    
     <div id="canvas-wrapper">
         <div id="canvas-container"></div>
         
@@ -155,10 +162,10 @@
             <h1>Giáng Sinh Lung Linh</h1>
             <div id="status-text">Trạng thái: <span style="color:#00ff00">Đang khởi tạo...</span></div>
             <div class="instructions">
-                • <span class="highlight">Nắm tay (Nắm đấm)</span> : Hạt tụ lại thành Cây Thông.<br>
+                • <span class="highlight">Nắm tay</span> : Hạt tụ lại thành Cây Thông.<br>
                 • <span class="highlight">Mở xòe tay</span> : Cây vỡ ra, hạt bay phân tán.<br>
                 • <span class="highlight">Vuốt tay</span> : Xoay khối hạt theo quán tính.<br>
-                • <span class="highlight">Chụm ngón (Cái & Trỏ)</span> : Zoom vào xem ảnh (Cần tải ảnh lên trước).
+                • <span class="highlight">Chụm ngón (Cái & Trỏ)</span> : Zoom vào xem ảnh.
             </div>
             <button id="upload-btn" onclick="document.getElementById('file-input').click()"> Tải Ảnh Kỷ Niệm Lên </button>
             <input type="file" id="file-input" multiple="" accept="image/*">
@@ -169,7 +176,7 @@
 
     <div id="share-modal">
         <div id="share-box">
-            <p>Nhấn giữ vào ô bên dưới để sao chép liên kết:</p>
+            <p>Copy link này gửi cho bạn bè nhé:</p>
             <input type="text" id="share-url" readonly="" onclick="this.select()">
             <button onclick="document.getElementById('share-modal').classList.remove('show')"> Đóng </button>
         </div>
@@ -181,18 +188,18 @@
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-        
-        // Bạn có thể cần tải file tasks-vision.js về máy hoặc dùng CDN
-        // Ở đây giả định file nằm trong thư mục libs
         import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0';
 
-        // --- Cấu hình ---
+        // --- CẤU HÌNH API & DOMAIN ---
+        const IMGBB_API_KEY = 'fd742c3948f8cf8f60e57cb4229df53d'; 
+        const MY_DOMAIN = 'https://merrychristmasv.vercel.app/';
+
         const CONFIG = {
-            goldCount: 600,     // Hạt vàng
-            silverCount: 600,   // Hạt bạc
-            gemCount: 400,      // Hạt đỏ (ngọc)
-            emeraldCount: 400,  // Hạt xanh (ngọc lục bảo)
-            dustCount: 1200,    // Bụi lấp lánh
+            goldCount: 600,     
+            silverCount: 600,   
+            gemCount: 400,      
+            emeraldCount: 400,  
+            dustCount: 1200,    
             treeHeight: 75,
             maxRadius: 30
         };
@@ -204,35 +211,133 @@
         let scene, camera, renderer, composer;
         let mainGroup = new THREE.Group();
         
-        // Instanced Meshes
-        let goldMesh, silverMesh, gemMesh, emeraldMesh;
-        let dustSystem;
+        let goldMesh, silverMesh, gemMesh, emeraldMesh, dustSystem;
         let photoMeshes = [];
         let zoomTargetIndex = -1;
 
-        // Dữ liệu logic
-        let logicData = {
-            gold: [],
-            silver: [],
-            gem: [],
-            emerald: [],
-            dust: []
-        };
-
+        let logicData = { gold: [], silver: [], gem: [], emerald: [], dust: [] };
         const dummy = new THREE.Object3D();
         let time = 0;
         
-        // Hand & Physics Variables
+        // Hand & Physics
         let handPos = { x: 0, y: 0 };
         let lastHandPos = { x: 0, y: 0 };
         let isHandPresent = false;
         let rotationVelocity = { x: 0, y: 0 };
 
-        // UI Toggle
+        // Upload Storage
+        let uploadedFiles = []; 
+
         window.toggleUI = function() {
             const wrapper = document.getElementById('canvas-wrapper');
             wrapper.classList.toggle('hide-ui');
         };
+
+        // --- 1. SHARE LOGIC (ImgBB) ---
+        
+        // Xử lý upload ảnh từ máy
+        document.getElementById('file-input').addEventListener('change', async function(e) {
+            const files = e.target.files;
+            if (!files.length) return;
+
+            const btn = document.getElementById('upload-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "Đang treo ảnh...";
+            btn.disabled = true;
+
+            for(let i=0; i<files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const base64 = evt.target.result;
+                    const img = new Image();
+                    img.src = base64;
+                    img.onload = () => { addPhotoMesh(img); }
+                    uploadedFiles.push(files[i]); 
+                }
+                reader.readAsDataURL(files[i]);
+            }
+
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                document.getElementById('share-btn').style.display = 'block';
+                alert(`Đã treo ${files.length} ảnh lên cây!`);
+            }, 1000);
+        });
+
+        // Tạo link chia sẻ
+        window.generateShareLink = async function() {
+            if (uploadedFiles.length === 0) {
+                alert('Bạn chưa chọn ảnh nào để chia sẻ cả!');
+                return;
+            }
+
+            const btn = document.getElementById('share-btn');
+            const oldText = btn.innerText;
+            btn.innerText = 'Đang tạo quà...';
+            btn.disabled = true;
+
+            try {
+                // Upload ảnh đầu tiên lên ImgBB
+                const fileToUpload = uploadedFiles[0]; 
+                const formData = new FormData();
+                formData.append("image", fileToUpload);
+
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const imgUrl = result.data.url;
+                    // Tạo link share
+                    const shareUrl = `${MY_DOMAIN}?photo=${encodeURIComponent(imgUrl)}`;
+                    document.getElementById('share-url').value = shareUrl;
+                    document.getElementById('share-modal').classList.add('show');
+                } else {
+                    alert('Lỗi tải ảnh: ' + (result.error ? result.error.message : 'Lỗi lạ'));
+                }
+
+            } catch (e) {
+                alert('Lỗi kết nối mạng. Hãy thử lại!');
+                console.error(e);
+            }
+
+            btn.innerText = oldText;
+            btn.disabled = false;
+        };
+
+        // Nhận quà từ link share
+        async function loadFromShare() {
+            const params = new URLSearchParams(window.location.search);
+            const photoUrl = params.get('photo');
+            
+            if (!photoUrl) return false;
+
+            document.getElementById('canvas-wrapper').classList.add('hide-ui');
+            document.getElementById('loading').innerText = '🎁 Đang mở hộp quà...';
+            document.getElementById('loading').style.display = 'block';
+
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.src = photoUrl;
+            
+            img.onload = function() {
+                addPhotoMesh(img);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('status-text').innerText = '🎄 Merry Christmas!';
+            };
+
+            img.onerror = function() {
+                document.getElementById('loading').innerText = 'Lỗi: Ảnh quà tặng hỏng rồi :(';
+            }
+
+            return true;
+        }
+
+        // --- 2. THREE.JS & LOGIC ---
 
         function initThree() {
             const container = document.getElementById('canvas-container');
@@ -253,11 +358,9 @@
             renderer.toneMappingExposure = 1.0;
             container.appendChild(renderer.domElement);
 
-            // Môi trường
             const pmremGenerator = new THREE.PMREMGenerator(renderer);
             scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
-            // Ánh sáng
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
             scene.add(ambientLight);
 
@@ -271,7 +374,6 @@
             blueLight.position.set(-30, -20, 30);
             scene.add(blueLight);
             
-            // Hiệu ứng Bloom (Phát sáng)
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(wrapper.clientWidth, wrapper.clientHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0.4;
@@ -300,13 +402,11 @@
         }
 
         function createMaterialsAndMeshes() {
-            // Materials
             const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xffaa00, metalness: 1.0, roughness: 0.15, clearcoat: 1.0, emissive: 0xaa5500, emissiveIntensity: 0.1 });
             const silverMat = new THREE.MeshPhysicalMaterial({ color: 0xeeeeee, metalness: 0.9, roughness: 0.2, clearcoat: 1.0, emissive: 0x222222, emissiveIntensity: 0.1 });
             const gemMat = new THREE.MeshPhysicalMaterial({ color: 0xff0044, metalness: 0.1, roughness: 0.0, transmission: 0.5, thickness: 1.0, emissive: 0x440011, emissiveIntensity: 0.3 });
             const emeraldMat = new THREE.MeshPhysicalMaterial({ color: 0x00aa55, metalness: 0.2, roughness: 0.1, transmission: 0.4, thickness: 1.5, emissive: 0x002211, emissiveIntensity: 0.2 });
 
-            // Geometries
             const sphereGeo = new THREE.SphereGeometry(0.7, 16, 16);
             const boxGeo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
             const diamondGeo = new THREE.OctahedronGeometry(0.8, 0);
@@ -317,7 +417,6 @@
             gemMesh = createInstancedMesh(diamondGeo, gemMat, CONFIG.gemCount, logicData.gem);
             emeraldMesh = createInstancedMesh(coneGeo, emeraldMat, CONFIG.emeraldCount, logicData.emerald);
 
-            // Ngôi sao trên đỉnh
             const star = new THREE.Mesh(
                 new THREE.OctahedronGeometry(3.0, 0), 
                 new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness:0.8, roughness:0, emissive:0xffffee, emissiveIntensity:1 })
@@ -393,7 +492,38 @@
             scene.add(stars);
         }
 
-        // --- Animation Loop ---
+        function addPhotoMesh(img) {
+            const tex = new THREE.Texture(img);
+            tex.needsUpdate = true;
+            tex.colorSpace = THREE.SRGBColorSpace;
+            let w = 4, h = 4;
+            if(img.width > img.height) h = 4 * (img.height/img.width);
+            else w = 4 * (img.width/img.height);
+
+            const geo = new THREE.PlaneGeometry(w, h);
+            const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, color: 0xcccccc });
+            const mesh = new THREE.Mesh(geo, mat);
+            
+            const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.2, h+0.2, 0.1), new THREE.MeshPhysicalMaterial({color:0xffd700, roughness:0.2, metalness:1}));
+            frame.position.z = -0.06;
+            mesh.add(frame);
+
+            const h_pos = (Math.random() - 0.5) * CONFIG.treeHeight;
+            const normH = (h_pos + CONFIG.treeHeight/2) / CONFIG.treeHeight;
+            const maxR = CONFIG.maxRadius * (1 - normH);
+            
+            const r = maxR * (0.3 + 0.6 * Math.sqrt(Math.random()));
+            const theta = Math.random() * Math.PI * 2;
+            
+            const treePos = new THREE.Vector3(r * Math.cos(theta), h_pos, r * Math.sin(theta));
+            const scatterPos = randomSpherePoint(50);
+
+            mesh.userData = { treePos, scatterPos, baseRot: new THREE.Euler(0, Math.random()*Math.PI, 0) };
+            mesh.position.copy(treePos);
+            photoMeshes.push(mesh);
+            mainGroup.add(mesh);
+        }
+
         function animate() {
             requestAnimationFrame(animate);
             time += 0.01;
@@ -406,14 +536,12 @@
             updateDust();
             updatePhotos();
             
-            // Star logic
             if (logicData.star) {
                 let target = currentState === STATE.TREE ? logicData.star.userData.treePos : logicData.star.userData.scatterPos;
                 logicData.star.position.lerp(target, 0.05);
                 logicData.star.rotation.y += 0.01;
             }
 
-            // Logic trạng thái
             if (currentState === STATE.ZOOM) {
                 rotationVelocity.x = 0;
                 rotationVelocity.y = 0;
@@ -526,7 +654,8 @@
             });
         }
 
-        // --- Interaction ---
+        // --- 3. MEDIAPIPE ---
+
         async function setupMediaPipe() {
             const video = document.getElementById("input-video");
 
@@ -667,135 +796,16 @@
             composer.passes[1].resolution.set(dims.width, dims.height);
         }
 
-        document.getElementById('file-input').addEventListener('change', function(e) {
-            const files = e.target.files;
-            if (!files.length) return;
-            for(let i=0; i<files.length; i++) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    const base64 = evt.target.result;
-                    uploadedImages.push(base64);
-                    const img = new Image();
-                    img.src = base64;
-                    img.onload = () => { addPhotoMesh(img); }
-                }
-                reader.readAsDataURL(files[i]);
-            }
-            document.getElementById('share-btn').style.display = 'block';
-            alert(`Đã thêm ${files.length} ảnh vào cây thông!`);
-        });
-
-        function addPhotoMesh(img) {
-            const tex = new THREE.Texture(img);
-            tex.needsUpdate = true;
-            tex.colorSpace = THREE.SRGBColorSpace;
-            let w = 4, h = 4;
-            if(img.width > img.height) h = 4 * (img.height/img.width);
-            else w = 4 * (img.width/img.height);
-
-            const geo = new THREE.PlaneGeometry(w, h);
-            const mat = new THREE.MeshBasicMaterial({ 
-                map: tex, 
-                side: THREE.DoubleSide, 
-                color: 0xcccccc 
-            });
-            const mesh = new THREE.Mesh(geo, mat);
-            
-            const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.2, h+0.2, 0.1), new THREE.MeshPhysicalMaterial({color:0xffd700, roughness:0.2, metalness:1}));
-            frame.position.z = -0.06;
-            mesh.add(frame);
-
-            const h_pos = (Math.random() - 0.5) * CONFIG.treeHeight;
-            const normH = (h_pos + CONFIG.treeHeight/2) / CONFIG.treeHeight;
-            const maxR = CONFIG.maxRadius * (1 - normH);
-            
-            const r = maxR * (0.3 + 0.6 * Math.sqrt(Math.random()));
-            const theta = Math.random() * Math.PI * 2;
-            
-            const treePos = new THREE.Vector3(r * Math.cos(theta), h_pos, r * Math.sin(theta));
-            const scatterPos = randomSpherePoint(50);
-
-            mesh.userData = { treePos, scatterPos, baseRot: new THREE.Euler(0, Math.random()*Math.PI, 0) };
-            mesh.position.copy(treePos);
-            photoMeshes.push(mesh);
-            mainGroup.add(mesh);
-        }
-
-        let uploadedImages = [];
-
-        window.generateShareLink = async function() {
-            if (uploadedImages.length === 0) {
-                alert('Bạn chưa tải ảnh nào lên!');
-                return;
-            }
-
-            const btn = document.getElementById('share-btn');
-            btn.innerText = 'Đang tạo...';
-            btn.disabled = true;
-
-            try {
-                // Lưu ý: api/share.php cần phải tồn tại trên server của bạn để xử lý lưu ảnh
-                const res = await fetch('api/share.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ images: uploadedImages })
-                });
-                const data = await res.json();
-
-                if (data.id) {
-                    const shareUrl = window.location.href.split('?')[0] + '?share=' + data.id;
-                    document.getElementById('share-url').value = shareUrl;
-                    document.getElementById('share-modal').classList.add('show');
-                } else {
-                    alert('Tạo link thất bại: ' + (data.error || 'Lỗi không xác định'));
-                }
-            } catch (e) {
-                alert('Không thể kết nối đến server để tạo link chia sẻ.');
-                console.error(e);
-            }
-
-            btn.innerText = 'Tạo Link Chia Sẻ';
-            btn.disabled = false;
-        };
-
-        async function loadFromShare() {
-            const params = new URLSearchParams(window.location.search);
-            const shareId = params.get('share');
-            if (!shareId) return false;
-
-            document.getElementById('canvas-wrapper').classList.add('hide-ui');
-            document.getElementById('loading').innerText = '🎁 Món quà đang tới...';
-            document.getElementById('loading').style.display = 'block';
-
-            try {
-                const res = await fetch('api/share.php?id=' + shareId);
-                const data = await res.json();
-
-                if (data.images && data.images.length > 0) {
-                    for (const base64 of data.images) {
-                        const img = new Image();
-                        img.src = base64;
-                        await new Promise(resolve => { img.onload = resolve; });
-                        addPhotoMesh(img);
-                    }
-                    document.getElementById('loading').style.display = 'none';
-                    return true;
-                }
-            } catch (e) {
-                console.error('Lỗi tải ảnh chia sẻ:', e);
-            }
-            return false;
-        }
-
+        // Play nhạc khi chạm vào màn hình
         function playMusic() {
             const music = document.getElementById('bg-music');
             music.volume = 0.5;
             music.play().catch(() => {});
         }
-
         document.addEventListener('click', playMusic, { once: true });
         document.addEventListener('touchstart', playMusic, { once: true });
 
+        // --- KHỞI TẠO ---
         async function init() {
             const cameraPromise = setupMediaPipe();
             initThree();
@@ -810,133 +820,6 @@
         }
 
         init();
-        // --- CẤU HÌNH API ---
-        // Đã điền sẵn mã của bạn:
-        const IMGBB_API_KEY = 'fd742c3948f8cf8f60e57cb4229df53d'; 
-
-        // 1. Xử lý khi người dùng chọn ảnh từ máy
-        document.getElementById('file-input').addEventListener('change', async function(e) {
-            const files = e.target.files;
-            if (!files.length) return;
-
-            // Hiển thị trạng thái đang xử lý
-            const btn = document.getElementById('upload-btn');
-            const originalText = btn.innerText;
-            btn.innerText = "Đang treo ảnh...";
-            btn.disabled = true;
-
-            // Xử lý từng ảnh
-            for(let i=0; i<files.length; i++) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    const base64 = evt.target.result;
-                    // Hiển thị lên cây ngay lập tức để người dùng xem trước
-                    const img = new Image();
-                    img.src = base64;
-                    img.onload = () => { addPhotoMesh(img); }
-                    
-                    // Lưu vào danh sách chờ upload
-                    uploadedFiles.push(files[i]); 
-                }
-                reader.readAsDataURL(files[i]);
-            }
-
-            // Mở nút chia sẻ sau 1 giây
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.disabled = false;
-                document.getElementById('share-btn').style.display = 'block';
-                alert(`Đã treo ${files.length} ảnh lên cây! Bấm 'Tạo Link Chia Sẻ' để gửi quà cho bạn bè.`);
-            }, 1000);
-        });
-
-        let uploadedFiles = []; // Danh sách file chờ upload
-
-        // 2. Hàm tạo link chia sẻ (Gửi ảnh lên ImgBB)
-        window.generateShareLink = async function() {
-            if (uploadedFiles.length === 0) {
-                alert('Bạn chưa chọn ảnh nào để chia sẻ cả!');
-                return;
-            }
-
-            const btn = document.getElementById('share-btn');
-            const oldText = btn.innerText;
-            btn.innerText = 'Đang tạo quà tặng...';
-            btn.disabled = true;
-
-            try {
-                // Lấy ảnh đầu tiên để làm quà (ImgBB miễn phí nên ta gửi 1 ảnh đại diện)
-                const fileToUpload = uploadedFiles[0]; 
-                const formData = new FormData();
-                formData.append("image", fileToUpload);
-
-                // Gửi ảnh lên ImgBB bằng API Key của bạn
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                    method: "POST",
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    const imgUrl = result.data.url; // Link ảnh trực tiếp từ ImgBB
-                    
-                    // Tạo đường link chia sẻ
-                    // Nó sẽ có dạng: https://merrychristmasv.vercel.app/?photo=LINK_ANH
-                    const currentUrl = "https://merrychristmasv.vercel.app/";
-                    const shareUrl = `${currentUrl}?photo=${encodeURIComponent(imgUrl)}`;
-
-                    // Hiển thị link cho người dùng copy
-                    document.getElementById('share-url').value = shareUrl;
-                    document.getElementById('share-modal').classList.add('show');
-                } else {
-                    alert('Lỗi tải ảnh: ' + (result.error ? result.error.message : 'Không xác định'));
-                }
-
-            } catch (e) {
-                alert('Lỗi kết nối: Không thể gửi ảnh đi. Hãy thử lại!');
-                console.error(e);
-            }
-
-            btn.innerText = oldText;
-            btn.disabled = false;
-        };
-
-        // 3. Hàm nhận quà (Khi người khác bấm vào link chia sẻ)
-        async function loadFromShare() {
-            const params = new URLSearchParams(window.location.search);
-            const photoUrl = params.get('photo'); // Lấy link ảnh từ URL
-            
-            if (!photoUrl) return false;
-
-            // Ẩn UI để tạo bất ngờ
-            document.getElementById('canvas-wrapper').classList.add('hide-ui');
-            document.getElementById('loading').innerText = '🎁 Đang mở hộp quà...';
-            document.getElementById('loading').style.display = 'block';
-
-            // Tải ảnh về và treo lên cây
-            const img = new Image();
-            img.crossOrigin = "Anonymous"; // Quan trọng
-            img.src = photoUrl;
-            
-            img.onload = function() {
-                addPhotoMesh(img); // Treo ảnh lên cây
-                
-                // Ẩn loading
-                document.getElementById('loading').style.display = 'none';
-                
-                // Thông báo nhỏ
-                document.getElementById('status-text').innerText = '🎄 Chúc mừng Giáng Sinh!';
-                
-                // Tự động phát nhạc nếu người dùng chạm vào màn hình (do trình duyệt chặn autoplay)
-            };
-
-            img.onerror = function() {
-                document.getElementById('loading').innerText = 'Lỗi: Ảnh quà tặng đã bị xóa hoặc hỏng :(';
-            }
-
-            return true;
-        }
     </script>
 </body>
 </html>
