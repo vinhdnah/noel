@@ -185,7 +185,7 @@
         // Mediapipe
         import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0';
 
-        // Firebase Imports
+        // --- 1. THÊM FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -208,7 +208,7 @@
         const CATBOX_USER_HASH = 'd282815575db64248b48063cb';
         const CORS_PROXY = 'https://corsproxy.io/?'; 
 
-        // --- Cấu hình 3D ---
+        // --- Cấu hình ---
         const CONFIG = {
             goldCount: 600,     // Hạt vàng
             silverCount: 600,   // Hạt bạc
@@ -689,9 +689,10 @@
             composer.passes[1].resolution.set(dims.width, dims.height);
         }
 
-        // --- Logic Upload & Share (Catbox + Firebase) ---
-        let uploadedImages = []; 
+        // --- 2. LOGIC UPLOAD & SHARE MỚI ---
+        let uploadedImages = []; // Lưu file để upload
 
+        // Xử lý sự kiện chọn file
         document.getElementById('file-input').addEventListener('change', function(e) {
             const files = e.target.files;
             if (!files.length) return;
@@ -699,10 +700,10 @@
                 const reader = new FileReader();
                 reader.onload = function(evt) {
                     const base64 = evt.target.result;
-                    uploadedImages.push(files[i]); // Store file object for Catbox upload
                     const img = new Image();
                     img.src = base64;
                     img.onload = () => { addPhotoMesh(img); }
+                    uploadedImages.push(files[i]); // Lưu FILE GỐC để upload lên Catbox
                 }
                 reader.readAsDataURL(files[i]);
             }
@@ -746,6 +747,7 @@
             mainGroup.add(mesh);
         }
 
+        // --- GENERATE SHARE LINK (CATBOX -> FIREBASE) ---
         window.generateShareLink = async function() {
             if (uploadedImages.length === 0) {
                 alert('Bạn chưa tải ảnh nào lên!');
@@ -753,20 +755,22 @@
             }
 
             const btn = document.getElementById('share-btn');
-            btn.innerText = 'Đang tạo...';
+            btn.innerText = '⏳ Đang upload lên Catbox...';
             btn.disabled = true;
 
-            const uploadedUrls = [];
+            const imageUrls = [];
 
             try {
-                // 1. Upload to Catbox via Proxy
+                // 1. Upload từng ảnh lên Catbox qua Proxy
                 for (let i = 0; i < uploadedImages.length; i++) {
                     const file = uploadedImages[i];
+                    
                     const formData = new FormData();
                     formData.append('reqtype', 'fileupload');
                     formData.append('userhash', CATBOX_USER_HASH);
                     formData.append('fileToUpload', file);
 
+                    // Sử dụng Proxy để tránh lỗi CORS
                     const response = await fetch(CORS_PROXY + 'https://catbox.moe/user/api.php', {
                         method: 'POST',
                         body: formData
@@ -774,29 +778,29 @@
 
                     if (response.ok) {
                         const url = await response.text();
-                        uploadedUrls.push(url.trim());
+                        imageUrls.push(url.trim());
                     } else {
-                        console.error('Failed to upload image to Catbox');
+                        console.error('Lỗi upload ảnh số ' + i);
                     }
                 }
 
-                if (uploadedUrls.length === 0) {
-                    throw new Error('Failed to upload any images');
+                if (imageUrls.length === 0) {
+                    throw new Error('Không upload được ảnh nào!');
                 }
 
-                // 2. Save URLs to Firebase
+                // 2. Lưu danh sách link vào Firebase
                 const docRef = await addDoc(collection(db, "shares"), {
-                    images: uploadedUrls,
+                    images: imageUrls,
                     timestamp: new Date()
                 });
 
-                // 3. Generate Link with ID
+                // 3. Tạo link chia sẻ
                 const shareUrl = window.location.href.split('?')[0] + '?share=' + docRef.id;
                 document.getElementById('share-url').value = shareUrl;
                 document.getElementById('share-modal').classList.add('show');
 
             } catch (e) {
-                alert('Tạo link thất bại: ' + e.message);
+                alert('Lỗi: ' + e.message);
                 console.error(e);
             }
 
@@ -804,6 +808,7 @@
             btn.disabled = false;
         };
 
+        // --- LOAD FROM SHARE ---
         async function loadFromShare() {
             const params = new URLSearchParams(window.location.search);
             const shareId = params.get('share');
@@ -824,18 +829,24 @@
                             const img = new Image();
                             img.crossOrigin = "Anonymous";
                             img.src = url;
-                            await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
-                            addPhotoMesh(img);
+                            await new Promise(resolve => { 
+                                img.onload = () => {
+                                    addPhotoMesh(img);
+                                    resolve();
+                                };
+                                img.onerror = resolve; // Bỏ qua lỗi
+                            });
                         }
                         document.getElementById('loading').style.display = 'none';
                         return true;
                     }
                 } else {
-                    console.log("No such document!");
+                    alert("Không tìm thấy hộp quà!");
                 }
             } catch (e) {
-                console.error('Lỗi tải ảnh chia sẻ:', e);
+                console.error('Lỗi tải dữ liệu:', e);
             }
+            document.getElementById('loading').style.display = 'none';
             return false;
         }
 
