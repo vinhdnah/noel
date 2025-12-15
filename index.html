@@ -3,63 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giáng Sinh Lung Linh - Noel 2025</title>
+    <title>Cây Thông Noel 3D Tương Tác</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
-        #canvas-wrapper { position: relative; width: 100vw; height: 100vh; }
-        #canvas-container { width: 100%; height: 100%; display: block; }
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #000; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* 4:3 Container */
+        #canvas-wrapper {
+            position: relative;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.1);
+            background: #000;
+            width: 100vw; 
+            height: 100vh;
+        }
+
+        #canvas-container { 
+            width: 100%; 
+            height: 100%; 
+            display: block;
+        }
         
+        /* Camera: Góc trên phải */
         #video-container {
             position: absolute; top: 20px; right: 20px; width: 160px; height: 120px; z-index: 2;
-            border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; overflow: hidden;
-            transform: scaleX(-1); background: rgba(0,0,0,0.5); box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 8px; overflow: hidden;
+            transform: scaleX(-1); box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.5);
+            transition: opacity 0.5s; 
         }
-        #input-video { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; position: absolute; top:0; left:0; }
-        #skeleton-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; }
+        #input-video { 
+            width: 100%; height: 100%; object-fit: cover; opacity: 0.6; 
+            position: absolute; top: 0; left: 0;
+        }
+        #skeleton-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+        }
 
         #ui-layer {
-            position: absolute; top: 30px; left: 30px; z-index: 3; color: #fff; pointer-events: none;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            position: absolute; top: 30px; left: 30px; z-index: 3; pointer-events: none;
+            color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            transition: opacity 0.5s;
         }
-        h1 { 
-            margin: 0 0 10px 0; font-weight: 200; letter-spacing: 4px; text-transform: uppercase;
-            background: linear-gradient(to right, #fff, #ffd700, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-        }
-        
-        .instructions {
-            background: rgba(0,0,0,0.6); padding: 15px; border-radius: 10px; border-left: 3px solid #ffd700;
-            max-width: 320px; font-size: 0.9rem; line-height: 1.6; backdrop-filter: blur(5px);
-        }
-        .highlight { color: #ffd700; font-weight: bold; }
-        
-        #btn-group { margin-top: 20px; pointer-events: auto; }
-        button {
-            padding: 10px 20px; border-radius: 20px; border: none; cursor: pointer;
-            font-weight: bold; margin-right: 10px; transition: 0.3s; font-size: 0.9rem;
-        }
-        #upload-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid #888; }
-        #share-btn { background: linear-gradient(45deg, #ffd700, #ffaa00); color: #000; display: none; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); border: none; }
-        button:hover { transform: scale(1.05); filter: brightness(1.2); }
 
+        h1 {
+            font-weight: 200; letter-spacing: 4px; text-transform: uppercase; font-size: 2.2rem; margin: 0 0 15px 0;
+            background: linear-gradient(to right, #fff, #d4af37, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .instructions {
+            font-size: 0.9rem; color: #eee; line-height: 1.8; max-width: 350px;
+            background: rgba(20, 20, 20, 0.7); padding: 15px; border-radius: 8px;
+            border-left: 3px solid #d4af37; backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .highlight { color: #d4af37; font-weight: bold; }
+        #status-text { margin-bottom: 10px; font-size: 1rem; color: #fff; font-weight: bold; }
+
+        #upload-btn {
+            pointer-events: auto; background: linear-gradient(45deg, #444, #666); border: 1px solid #888;
+            color: #fff; padding: 10px 24px; cursor: pointer; text-transform: uppercase;
+            font-size: 0.8rem; margin-top: 25px; transition: 0.3s; 
+            letter-spacing: 1px; border-radius: 20px;
+        }
+        #upload-btn:hover, #share-btn:hover { background: #fff; color: #000; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
         #file-input { display: none; }
+        #share-btn {
+            pointer-events: auto; background: linear-gradient(45deg, #d4af37, #aa8800); border: 1px solid #d4af37;
+            color: #000; padding: 10px 24px; cursor: pointer; text-transform: uppercase;
+            font-size: 0.8rem; margin-top: 10px; transition: 0.3s;
+            letter-spacing: 1px; border-radius: 20px; display: none;
+        }
+        #share-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;
+        }
+        #share-modal.show { display: flex; }
+        #share-box {
+            background: #222; padding: 20px; border-radius: 10px; border: 1px solid #d4af37;
+            max-width: 90%; text-align: center; color: white;
+        }
+        #share-box p { color: #fff; margin: 0 0 15px 0; }
+        #share-url {
+            width: 100%; padding: 10px; font-size: 14px; border: 1px solid #666;
+            border-radius: 5px; background: #111; color: #d4af37; text-align: center;
+        }
+        #share-box button {
+            margin-top: 15px; padding: 10px 30px; background: #d4af37; border: none;
+            border-radius: 20px; cursor: pointer; font-size: 14px;
+        }
         
         #loading {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: #ffd700; font-size: 1.5rem; z-index: 20; text-align: center;
-            background: rgba(0,0,0,0.85); padding: 30px; border-radius: 15px; display: none; border: 1px solid #ffd700;
+            color: #d4af37; font-size: 1.2rem; letter-spacing: 3px; z-index: 10; pointer-events: none; transition: opacity 0.5s;
         }
 
-        #share-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center;
-        }
-        #share-modal.show { display: flex; }
-        #share-box { background: #222; padding: 30px; border-radius: 15px; text-align: center; color: white; border: 1px solid #ffd700; max-width: 90%; }
-        #share-url { width: 100%; max-width: 400px; padding: 12px; border-radius: 5px; border: 1px solid #555; margin: 15px 0; text-align: center; background: #111; color: #ffd700; font-size: 14px; }
-
-        .hide-ui #ui-layer { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
-        .hide-ui #fullscreen-btn { opacity: 0.3; }
-        
+        /* Nút toàn màn hình */
         #fullscreen-btn {
             position: absolute; top: 30px; right: 200px; z-index: 20;
             background: rgba(0,0,0,0.5); color: #d4af37; border: 1px solid #d4af37;
@@ -67,9 +114,22 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 1.2rem; transition: all 0.3s;
         }
-        #fullscreen-btn:hover { background: #d4af37; color: #000; opacity: 1; }
+        #fullscreen-btn:hover { background: #d4af37; color: #000; }
+
+        /* Class ẩn UI */
+        .hide-ui #ui-layer, 
+        .hide-ui #upload-btn {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .hide-ui #fullscreen-btn {
+            opacity: 0.3;
+        }
+        .hide-ui #fullscreen-btn:hover {
+            opacity: 1;
+        }
     </style>
-    
     <script type="importmap">
         {
             "imports": {
@@ -81,60 +141,55 @@
 </head>
 <body>
     <audio id="bg-music" src="https://incompetech.com/music/royalty-free/mp3-royaltyfree/Jingle%20Bells.mp3" loop></audio>
-
     <div id="canvas-wrapper">
         <div id="canvas-container"></div>
+        
         <div id="video-container">
-            <video id="input-video" autoplay playsinline muted></video>
+            <video id="input-video" autoplay="" playsinline="" muted=""></video>
             <canvas id="skeleton-canvas" width="640" height="480"></canvas>
         </div>
 
-        <button id="fullscreen-btn" onclick="toggleUI()" title="Toàn màn hình"> ⛶ </button>
+        <button id="fullscreen-btn" onclick="toggleUI()" title="Chế độ toàn màn hình"> ⛶ </button>
 
         <div id="ui-layer">
-            <h1>Noel 2025</h1>
-            <div id="status-text">Trạng thái: <span style="color:#00ff00">Sẵn sàng</span></div>
+            <h1>Giáng Sinh Lung Linh</h1>
+            <div id="status-text">Trạng thái: <span style="color:#00ff00">Đang khởi tạo...</span></div>
             <div class="instructions">
-                🖐️ <b>Mở tay:</b> Hạt phân tán<br>
-                ✊ <b>Nắm tay:</b> Tụ thành Cây Thông<br>
-                🤏 <b>Chụm (Cái+Trỏ):</b> Zoom vào ảnh
+                • <span class="highlight">Nắm tay (Nắm đấm)</span> : Hạt tụ lại thành Cây Thông.<br>
+                • <span class="highlight">Mở xòe tay</span> : Cây vỡ ra, hạt bay phân tán.<br>
+                • <span class="highlight">Vuốt tay</span> : Xoay khối hạt theo quán tính.<br>
+                • <span class="highlight">Chụm ngón (Cái & Trỏ)</span> : Zoom vào xem ảnh (Cần tải ảnh lên trước).
             </div>
-            <div id="btn-group">
-                <button id="upload-btn" onclick="document.getElementById('file-input').click()">📸 Chọn Ảnh</button>
-                <input type="file" id="file-input" multiple accept="image/*">
-                <button id="share-btn" onclick="saveToDatabase()">☁️ Lưu & Chia Sẻ</button>
-            </div>
+            <button id="upload-btn" onclick="document.getElementById('file-input').click()"> Tải Ảnh Kỷ Niệm Lên </button>
+            <input type="file" id="file-input" multiple="" accept="image/*">
+            <button id="share-btn" onclick="generateShareLink()"> Tạo Link Chia Sẻ </button>
         </div>
-        <div id="loading">Đang xử lý...</div>
+        <div id="loading">ĐANG TẠO HẠT NGỌC...</div>
     </div>
 
     <div id="share-modal">
         <div id="share-box">
-            <h3 style="color:#ffd700">🎁 Hộp quà đã sẵn sàng!</h3>
-            <p>Gửi đường link này cho người bạn muốn tặng:</p>
-            <input type="text" id="share-url" readonly onclick="this.select()">
-            <br>
-            <button onclick="document.getElementById('share-modal').classList.remove('show')" style="background:#555; color:white; border:none; padding:10px 30px; margin-top:10px; border-radius:20px; cursor:pointer;">Đóng</button>
+            <p>Nhấn giữ vào ô bên dưới để sao chép liên kết:</p>
+            <input type="text" id="share-url" readonly="" onclick="this.select()">
+            <button onclick="document.getElementById('share-modal').classList.remove('show')"> Đóng </button>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         import * as THREE from 'three';
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+        
+        // Mediapipe
         import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0';
 
-        // ------------------------------------------------------------------
-        // 1. CẤU HÌNH (ĐÃ ĐIỀN ĐỦ)
-        // ------------------------------------------------------------------
-        
-        const IMGBB_API_KEY = 'fd742c3948f8cf8f60e57cb4229df53d';
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Cấu hình Firebase của bạn
+        // --- Cấu hình Firebase ---
         const firebaseConfig = {
             apiKey: "AIzaSyCUzhyAfn8slxxpkZCl6cl0rwx9r5lvs7g",
             authDomain: "noel-97d6e.firebaseapp.com",
@@ -145,396 +200,665 @@
             measurementId: "G-80YM9M8QCL"
         };
 
-        // Khởi tạo Firebase
-        let db;
-        try {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            console.log("Firebase connected successfully!");
-        } catch(e) {
-            console.error("Firebase Init Error:", e);
-            alert("Lỗi kết nối Database!");
-        }
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-        // ------------------------------------------------------------------
-        // 2. LOGIC LƯU TRỮ & CHIA SẺ
-        // ------------------------------------------------------------------
-        let uploadedFiles = []; 
-        let uploadedUrls = [];  
-
-        // Chọn ảnh từ máy
-        document.getElementById('file-input').addEventListener('change', (e) => {
-            const files = e.target.files;
-            if(!files.length) return;
-            
-            // Preview ảnh ngay lập tức
-            for(let i=0; i<files.length; i++){
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    const img = new Image();
-                    img.src = evt.target.result;
-                    img.onload = () => addPhotoMesh(img);
-                    uploadedFiles.push(files[i]);
-                };
-                reader.readAsDataURL(files[i]);
-            }
-            
-            setTimeout(() => {
-                document.getElementById('share-btn').style.display = 'inline-block';
-                document.getElementById('status-text').innerHTML = `Đã thêm <span style="color:#ffd700">${files.length} ảnh</span>`;
-                alert(`Đã thêm ${files.length} ảnh. Hãy bấm "Lưu & Chia Sẻ" để tạo link quà tặng!`);
-            }, 1000);
-        });
-
-        // Lưu vào Database
-        window.saveToDatabase = async function() {
-            if(!db) return;
-            if(uploadedFiles.length === 0) { alert("Bạn chưa chọn ảnh nào!"); return; }
-
-            const btn = document.getElementById('share-btn');
-            const originalText = btn.innerText;
-            btn.innerText = "⏳ Đang tải lên...";
-            btn.disabled = true;
-
-            try {
-                // B1: Upload ảnh lên ImgBB
-                uploadedUrls = [];
-                for(let i=0; i<uploadedFiles.length; i++) {
-                    btn.innerText = `Up ảnh ${i+1}/${uploadedFiles.length}...`;
-                    const formData = new FormData();
-                    formData.append("image", uploadedFiles[i]);
-                    
-                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                        method: "POST", body: formData
-                    });
-                    const data = await res.json();
-                    if(data.success) uploadedUrls.push(data.data.url);
-                }
-
-                // B2: Lưu link vào Firebase
-                if(uploadedUrls.length > 0) {
-                    btn.innerText = "Lưu Database...";
-                    const docRef = await addDoc(collection(db, "wishes"), {
-                        photos: uploadedUrls,
-                        createdAt: new Date().toISOString()
-                    });
-
-                    // B3: Tạo link chia sẻ
-                    const shareLink = window.location.href.split('?')[0] + "?id=" + docRef.id;
-                    document.getElementById('share-url').value = shareLink;
-                    document.getElementById('share-modal').classList.add('show');
-                } else {
-                    alert("Không tải được ảnh nào lên Server :(");
-                }
-
-            } catch(e) {
-                alert("Lỗi: " + e.message);
-                console.error(e);
-            }
-            
-            btn.innerText = originalText;
-            btn.disabled = false;
+        // --- Cấu hình ---
+        const CONFIG = {
+            goldCount: 600,     // Hạt vàng
+            silverCount: 600,   // Hạt bạc
+            gemCount: 400,      // Hạt đỏ (ngọc)
+            emeraldCount: 400,  // Hạt xanh (ngọc lục bảo)
+            dustCount: 1200,    // Bụi lấp lánh
+            treeHeight: 75,
+            maxRadius: 30
         };
 
-        // Load từ Database
-        async function loadFromDatabase() {
-            const params = new URLSearchParams(window.location.search);
-            const id = params.get('id');
-            if(!id) return false;
-
-            const loading = document.getElementById('loading');
-            loading.style.display = 'block';
-            loading.innerText = "🎁 Đang tải hộp quà...";
-            document.getElementById('canvas-wrapper').classList.add('hide-ui'); // Ẩn UI upload
-
-            try {
-                if(!db) throw new Error("Database chưa sẵn sàng");
-                const docSnap = await getDoc(doc(db, "wishes", id));
-                
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const photos = data.photos || [];
-                    
-                    document.getElementById('status-text').innerHTML = `🎄 Album: <span style="color:#ffd700">${photos.length} ảnh</span>`;
-                    
-                    let loadedCount = 0;
-                    for(let url of photos) {
-                        const img = new Image();
-                        img.crossOrigin = "Anonymous";
-                        img.src = url;
-                        await new Promise(r => { 
-                            img.onload = () => { addPhotoMesh(img); loadedCount++; r(); }; 
-                            img.onerror = r; 
-                        });
-                    }
-                    if(loadedCount > 0) currentState = STATE.TREE; // Mặc định về cây thông
-                } else {
-                    alert("Không tìm thấy hộp quà này (Có thể đã bị xóa)");
-                }
-            } catch(e) {
-                console.error(e);
-                alert("Lỗi tải dữ liệu hộp quà.");
-            }
-            loading.style.display = 'none';
-            return true;
-        }
-
-        // ------------------------------------------------------------------
-        // 3. 3D & LOGIC (ZOOM FIXED)
-        // ------------------------------------------------------------------
-        const STATE = { TREE: 0, SCATTER: 1, ZOOM: 2 };
+        const STATE = { TREE: 'tree', SCATTER: 'scatter', ZOOM: 'zoom' };
         let currentState = STATE.TREE;
+        let targetState = STATE.TREE;
         
-        // Scene setup
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x020202);
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-        camera.position.z = 80;
+        let scene, camera, renderer, composer;
+        let mainGroup = new THREE.Group();
         
-        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-        // Post-processing (Glow)
-        const composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
-        composer.addPass(new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85));
-
-        const mainGroup = new THREE.Group();
-        scene.add(mainGroup);
-
-        // Objects
-        const photoMeshes = [];
-        let particles;
-        
-        // Tạo hạt (Tuyết/Sao)
-        function createParticles() {
-            const geo = new THREE.BufferGeometry();
-            const pos = [];
-            for(let i=0; i<1500; i++) {
-                const r = 40 * Math.cbrt(Math.random());
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2*Math.random()-1);
-                pos.push(r*Math.sin(phi)*Math.cos(theta), r*Math.sin(phi)*Math.sin(theta), r*Math.cos(phi));
-            }
-            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-            particles = new THREE.Points(geo, new THREE.PointsMaterial({color: 0xffd700, size: 0.4, transparent: true, opacity: 0.8}));
-            mainGroup.add(particles);
-        }
-        createParticles();
-
-        // Tạo ảnh 3D
-        function addPhotoMesh(img) {
-            const tex = new THREE.Texture(img);
-            tex.needsUpdate = true;
-            tex.colorSpace = THREE.SRGBColorSpace;
-            
-            const aspect = img.width / img.height;
-            const h = 6; 
-            const w = h * aspect;
-
-            const geo = new THREE.PlaneGeometry(w, h);
-            const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
-            const mesh = new THREE.Mesh(geo, mat);
-            
-            // Khung ảnh
-            const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.3, h+0.3, 0.1), new THREE.MeshBasicMaterial({color: 0x8B4513}));
-            frame.position.z = -0.06;
-            mesh.add(frame);
-
-            // Vị trí trên cây (Hình nón xoắn)
-            const y = (Math.random() - 0.5) * 60; // Chiều cao
-            const r = 18 * (1 - (y+35)/75) + 2;   // Bán kính (nhỏ dần lên đỉnh)
-            const angle = Math.random() * Math.PI * 2;
-            
-            const treePos = new THREE.Vector3(r*Math.cos(angle), y, r*Math.sin(angle));
-            const scatterPos = new THREE.Vector3((Math.random()-0.5)*90, (Math.random()-0.5)*90, (Math.random()-0.5)*90);
-
-            mesh.userData = { treePos, scatterPos, angle };
-            mesh.position.copy(treePos);
-            mesh.lookAt(0, y, 0); // Nhìn vào trục giữa
-            mesh.rotateY(Math.PI); // Quay mặt ra ngoài
-            
-            // Lưu rotation cơ bản để khi zoom out nó quay về đúng hướng này
-            mesh.userData.baseRot = mesh.rotation.clone();
-
-            photoMeshes.push(mesh);
-            mainGroup.add(mesh);
-        }
-
-        // Logic Update Frame
-        function updateScene() {
-            // Xoay hạt
-            if(particles) particles.rotation.y += 0.002;
-
-            if(currentState === STATE.TREE) {
-                mainGroup.rotation.y += 0.003; // Cây tự xoay nhẹ
-                photoMeshes.forEach(m => {
-                    m.position.lerp(m.userData.treePos, 0.05);
-                    m.quaternion.slerp(new THREE.Quaternion().setFromEuler(m.userData.baseRot), 0.05);
-                    m.scale.lerp(new THREE.Vector3(1,1,1), 0.1);
-                });
-            } 
-            else if(currentState === STATE.SCATTER) {
-                mainGroup.rotation.y += 0.001;
-                photoMeshes.forEach(m => {
-                    m.position.lerp(m.userData.scatterPos, 0.05);
-                    m.lookAt(camera.position); // Luôn nhìn camera
-                    m.scale.lerp(new THREE.Vector3(1,1,1), 0.1);
-                });
-            }
-            else if(currentState === STATE.ZOOM) {
-                // Ở chế độ Zoom:
-                // 1. Tìm ảnh đang được chọn (zoomTargetIndex)
-                // 2. Đưa nó về trước camera
-                // 3. Đẩy các ảnh khác ra xa/làm nhỏ đi
-                
-                photoMeshes.forEach((m, idx) => {
-                    if(idx === zoomTargetIndex) {
-                        // Vị trí trước camera (trong Local Space của mainGroup)
-                        // Vì camera ở World (0,0,80), ta muốn ảnh ở World (0,0,60) chẳng hạn
-                        // Nhưng mainGroup đang xoay, nên ta phải tính ngược
-                        
-                        const targetWorld = new THREE.Vector3(0, 0, 65);
-                        const targetLocal = mainGroup.worldToLocal(targetWorld.clone());
-                        
-                        m.position.lerp(targetLocal, 0.1);
-                        m.lookAt(camera.position);
-                        m.scale.lerp(new THREE.Vector3(2.5, 2.5, 2.5), 0.1); // Phóng to
-                    } else {
-                        m.scale.lerp(new THREE.Vector3(0.1, 0.1, 0.1), 0.1); // Thu nhỏ ảnh khác
-                    }
-                });
-            }
-        }
-
-        // --- 4. AI NHẬN DIỆN TAY ---
-        let handLandmarker;
+        // Instanced Meshes
+        let goldMesh, silverMesh, gemMesh, emeraldMesh;
+        let dustSystem;
+        let photoMeshes = [];
         let zoomTargetIndex = -1;
 
-        async function setupAI() {
+        // Dữ liệu logic
+        let logicData = {
+            gold: [],
+            silver: [],
+            gem: [],
+            emerald: [],
+            dust: []
+        };
+
+        const dummy = new THREE.Object3D();
+        let time = 0;
+        
+        // Hand & Physics Variables
+        let handPos = { x: 0, y: 0 };
+        let lastHandPos = { x: 0, y: 0 };
+        let isHandPresent = false;
+        let rotationVelocity = { x: 0, y: 0 };
+
+        // UI Toggle
+        window.toggleUI = function() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.classList.toggle('hide-ui');
+        };
+
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            const wrapper = document.getElementById('canvas-wrapper');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020202); 
+
+            updateDimensions();
+
+            camera = new THREE.PerspectiveCamera(50, wrapper.clientWidth / wrapper.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 110);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(wrapper.clientWidth, wrapper.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            container.appendChild(renderer.domElement);
+
+            // Môi trường
+            const pmremGenerator = new THREE.PMREMGenerator(renderer);
+            scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+            // Ánh sáng
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            scene.add(ambientLight);
+
+            const spotLight = new THREE.SpotLight(0xffddaa, 80);
+            spotLight.position.set(30, 60, 50);
+            spotLight.angle = Math.PI / 4;
+            spotLight.penumbra = 1;
+            scene.add(spotLight);
+
+            const blueLight = new THREE.PointLight(0xaaddff, 40, 100);
+            blueLight.position.set(-30, -20, 30);
+            scene.add(blueLight);
+            
+            // Hiệu ứng Bloom (Phát sáng)
+            const renderScene = new RenderPass(scene, camera);
+            const bloomPass = new UnrealBloomPass(new THREE.Vector2(wrapper.clientWidth, wrapper.clientHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0.4;
+            bloomPass.strength = 0.6;
+            bloomPass.radius = 0.5;
+
+            composer = new EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+
+            createMaterialsAndMeshes();
+            createDust();
+            createStarField();
+
+            scene.add(mainGroup);
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function updateDimensions() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.style.width = width + 'px';
+            wrapper.style.height = height + 'px';
+            return { width, height };
+        }
+
+        function createMaterialsAndMeshes() {
+            // Materials
+            const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xffaa00, metalness: 1.0, roughness: 0.15, clearcoat: 1.0, emissive: 0xaa5500, emissiveIntensity: 0.1 });
+            const silverMat = new THREE.MeshPhysicalMaterial({ color: 0xeeeeee, metalness: 0.9, roughness: 0.2, clearcoat: 1.0, emissive: 0x222222, emissiveIntensity: 0.1 });
+            const gemMat = new THREE.MeshPhysicalMaterial({ color: 0xff0044, metalness: 0.1, roughness: 0.0, transmission: 0.5, thickness: 1.0, emissive: 0x440011, emissiveIntensity: 0.3 });
+            const emeraldMat = new THREE.MeshPhysicalMaterial({ color: 0x00aa55, metalness: 0.2, roughness: 0.1, transmission: 0.4, thickness: 1.5, emissive: 0x002211, emissiveIntensity: 0.2 });
+
+            // Geometries
+            const sphereGeo = new THREE.SphereGeometry(0.7, 16, 16);
+            const boxGeo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+            const diamondGeo = new THREE.OctahedronGeometry(0.8, 0);
+            const coneGeo = new THREE.ConeGeometry(0.5, 1.2, 8); 
+
+            goldMesh = createInstancedMesh(sphereGeo, goldMat, CONFIG.goldCount, logicData.gold);
+            silverMesh = createInstancedMesh(boxGeo, silverMat, CONFIG.silverCount, logicData.silver);
+            gemMesh = createInstancedMesh(diamondGeo, gemMat, CONFIG.gemCount, logicData.gem);
+            emeraldMesh = createInstancedMesh(coneGeo, emeraldMat, CONFIG.emeraldCount, logicData.emerald);
+
+            // Ngôi sao trên đỉnh
+            const star = new THREE.Mesh(
+                new THREE.OctahedronGeometry(3.0, 0), 
+                new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness:0.8, roughness:0, emissive:0xffffee, emissiveIntensity:1 })
+            );
+            star.userData = { treePos: new THREE.Vector3(0, CONFIG.treeHeight/2 + 2, 0), scatterPos: new THREE.Vector3(0, 60, 0) };
+            star.position.copy(star.userData.treePos);
+            mainGroup.add(star);
+            logicData.star = star;
+        }
+
+        function createInstancedMesh(geo, mat, count, dataArray) {
+            const mesh = new THREE.InstancedMesh(geo, mat, count);
+            mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            mainGroup.add(mesh);
+            generateLogicData(count, dataArray);
+            return mesh;
+        }
+
+        function generateLogicData(count, array) {
+            for (let i = 0; i < count; i++) {
+                const h = Math.random() * CONFIG.treeHeight - CONFIG.treeHeight/2;
+                const normH = (h + CONFIG.treeHeight/2) / CONFIG.treeHeight;
+                const rMax = CONFIG.maxRadius * (1 - normH);
+                
+                const r = Math.sqrt(Math.random()) * rMax; 
+                const theta = Math.random() * Math.PI * 2;
+                
+                const treePos = new THREE.Vector3(r * Math.cos(theta), h, r * Math.sin(theta));
+                const scatterPos = randomSpherePoint(40 + Math.random()*40);
+
+                array.push({
+                    treePos: treePos,
+                    scatterPos: scatterPos,
+                    currentPos: treePos.clone(),
+                    scale: 0.6 + Math.random() * 0.8,
+                    rotSpeed: new THREE.Euler(Math.random()*0.03, Math.random()*0.03, Math.random()*0.03),
+                    rotation: new THREE.Euler(Math.random()*Math.PI, Math.random()*Math.PI, 0)
+                });
+            }
+        }
+
+        function randomSpherePoint(r) {
+            const u = Math.random(), v = Math.random();
+            const theta = 2 * Math.PI * u, phi = Math.acos(2 * v - 1);
+            return new THREE.Vector3(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
+        }
+
+        function createDust() {
+            const geo = new THREE.BufferGeometry();
+            const pos = [];
+            for(let i=0; i<CONFIG.dustCount; i++) {
+                const h = Math.random() * CONFIG.treeHeight - CONFIG.treeHeight/2;
+                const r = Math.random() * CONFIG.maxRadius * (1 - (h + CONFIG.treeHeight/2)/CONFIG.treeHeight) + 2; 
+                const theta = Math.random() * Math.PI * 2;
+                pos.push(r*Math.cos(theta), h, r*Math.sin(theta));
+                logicData.dust.push({
+                    treePos: new THREE.Vector3(r*Math.cos(theta), h, r*Math.sin(theta)),
+                    scatterPos: randomSpherePoint(60),
+                    currentPos: new THREE.Vector3(r*Math.cos(theta), h, r*Math.sin(theta))
+                });
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            dustSystem = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffee, size: 0.6, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
+            mainGroup.add(dustSystem);
+        }
+        
+        function createStarField() {
+            const geo = new THREE.BufferGeometry();
+            const pos = [];
+            for(let i=0; i<1000; i++) pos.push((Math.random()-0.5)*1000, (Math.random()-0.5)*1000, (Math.random()-0.5)*1000);
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            const stars = new THREE.Points(geo, new THREE.PointsMaterial({color: 0x888888, size: 1.2, transparent: true, opacity: 0.5}));
+            scene.add(stars);
+        }
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            updateInstancedMesh(goldMesh, logicData.gold);
+            updateInstancedMesh(silverMesh, logicData.silver);
+            updateInstancedMesh(gemMesh, logicData.gem);
+            updateInstancedMesh(emeraldMesh, logicData.emerald);
+
+            updateDust();
+            updatePhotos();
+            
+            // Star logic
+            if (logicData.star) {
+                let target = currentState === STATE.TREE ? logicData.star.userData.treePos : logicData.star.userData.scatterPos;
+                logicData.star.position.lerp(target, 0.05);
+                logicData.star.rotation.y += 0.01;
+            }
+
+            // Logic trạng thái
+            if (currentState === STATE.ZOOM) {
+                rotationVelocity.x = 0;
+                rotationVelocity.y = 0;
+            } 
+            else if (currentState === STATE.SCATTER) {
+                if (isHandPresent) {
+                    const deltaX = handPos.x - lastHandPos.x;
+                    const deltaY = handPos.y - lastHandPos.y;
+                    
+                    if (deltaX > 0.002) rotationVelocity.y += deltaX * 0.15;
+                    if (Math.abs(deltaY) > 0.002) rotationVelocity.x += deltaY * 0.05;
+                    
+                    lastHandPos.x = handPos.x;
+                    lastHandPos.y = handPos.y;
+                }
+                
+                rotationVelocity.y = Math.min(rotationVelocity.y, 0.05);
+                rotationVelocity.x = Math.max(Math.min(rotationVelocity.x, 0.02), -0.02);
+
+                mainGroup.rotation.y += rotationVelocity.y;
+                mainGroup.rotation.x += rotationVelocity.x;
+                
+                rotationVelocity.y *= 0.96; 
+                rotationVelocity.x *= 0.92; 
+                mainGroup.rotation.x *= 0.98; 
+
+            } else if (currentState === STATE.TREE) {
+                mainGroup.rotation.y += 0.003;
+                mainGroup.rotation.x *= 0.95;
+            }
+
+            composer.render();
+        }
+
+        function updateInstancedMesh(mesh, dataArray) {
+            for (let i = 0; i < dataArray.length; i++) {
+                const item = dataArray[i];
+                let target = currentState === STATE.TREE ? item.treePos : item.scatterPos;
+                if(currentState === STATE.ZOOM) target = item.scatterPos;
+                
+                if (currentState === STATE.SCATTER) item.currentPos.y += Math.sin(time + i)*0.005;
+
+                item.currentPos.lerp(target, 0.08);
+                item.rotation.x += item.rotSpeed.x;
+                item.rotation.y += item.rotSpeed.y;
+
+                let s = item.scale;
+                if(currentState === STATE.ZOOM) s = item.scale * 0.6; 
+
+                dummy.position.copy(item.currentPos);
+                dummy.rotation.copy(item.rotation);
+                dummy.scale.setScalar(s);
+                dummy.updateMatrix();
+                mesh.setMatrixAt(i, dummy.matrix);
+            }
+            mesh.instanceMatrix.needsUpdate = true;
+        }
+
+        function updateDust() {
+            const positions = dustSystem.geometry.attributes.position.array;
+            for(let i=0; i<logicData.dust.length; i++) {
+                const item = logicData.dust[i];
+                let target = currentState === STATE.TREE ? item.treePos : item.scatterPos;
+                if(currentState !== STATE.TREE) item.currentPos.lerp(target, 0.05);
+                else {
+                    item.currentPos.y += 0.05;
+                    if(item.currentPos.y > CONFIG.treeHeight/2) item.currentPos.y = -CONFIG.treeHeight/2;
+                    const normH = (item.currentPos.y + CONFIG.treeHeight/2) / CONFIG.treeHeight;
+                    const rMax = CONFIG.maxRadius * (1-normH) + 2;
+                    const rCurr = Math.sqrt(item.currentPos.x**2 + item.currentPos.z**2);
+                    if(rCurr > rMax) {
+                        item.currentPos.x *= 0.98;
+                        item.currentPos.z *= 0.98;
+                    }
+                }
+                positions[i*3] = item.currentPos.x;
+                positions[i*3+1] = item.currentPos.y;
+                positions[i*3+2] = item.currentPos.z;
+            }
+            dustSystem.geometry.attributes.position.needsUpdate = true;
+        }
+
+        function updatePhotos() {
+            photoMeshes.forEach((mesh, idx) => {
+                let targetPos, targetScale = 2.0; 
+                
+                if (currentState === STATE.SCATTER) {
+                    targetScale = 4.0; 
+                    mesh.lookAt(camera.position); 
+                }
+
+                if (currentState === STATE.ZOOM && idx === zoomTargetIndex) {
+                    const targetWorldPos = new THREE.Vector3(0, 0, 80); 
+                    targetPos = mainGroup.worldToLocal(targetWorldPos);
+                    
+                    targetScale = 4.0;
+                    mesh.lookAt(camera.position); 
+                } else {
+                    targetPos = currentState === STATE.TREE ? mesh.userData.treePos : mesh.userData.scatterPos;
+                    if(currentState !== STATE.TREE) mesh.position.y += Math.sin(time+idx)*0.01;
+                    
+                    if (currentState === STATE.TREE) {
+                        mesh.rotation.copy(mesh.userData.baseRot);
+                        mesh.rotation.y += 0.01;
+                    }
+                }
+                
+                mesh.position.lerp(targetPos, 0.1);
+                mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+            });
+        }
+
+        // --- Interaction ---
+        async function setupMediaPipe() {
             const video = document.getElementById("input-video");
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
-            } catch(e) { console.log("Camera error", e); return; }
+                document.getElementById('status-text').innerText = "Đã mở Camera, đang tải AI...";
+            } catch (e) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('status-text').innerText = "Không thể mở Camera!";
+                return;
+            }
 
+            document.getElementById('status-text').innerText = "Đang tải bộ nhận diện...";
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
-            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+
+            document.getElementById('status-text').innerText = "Đang tải mô hình tay...";
+            const handLandmarker = await HandLandmarker.createFromOptions(vision, {
                 baseOptions: {
-                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+                    modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
                     delegate: "GPU"
                 },
                 runningMode: "VIDEO", numHands: 1
             });
-            detectLoop();
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('status-text').innerText = "Sẵn sàng! Hãy đưa tay lên";
+            predictWebcam(handLandmarker, video);
         }
 
-        async function detectLoop() {
-            const video = document.getElementById("input-video");
-            if(video.currentTime > 0 && handLandmarker) {
-                const res = handLandmarker.detectForVideo(video, performance.now());
+        let lastVideoTime = -1;
+        async function predictWebcam(handLandmarker, video) {
+            if (video.currentTime !== lastVideoTime) {
+                lastVideoTime = video.currentTime;
+                const result = handLandmarker.detectForVideo(video, performance.now());
                 
                 const canvas = document.getElementById('skeleton-canvas');
                 const ctx = canvas.getContext('2d');
-                ctx.clearRect(0,0,640,480);
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                if(res.landmarks.length > 0) {
-                    const lm = res.landmarks[0];
-                    drawSkeleton(ctx, lm);
-                    processGesture(lm);
+                if (result.landmarks && result.landmarks.length > 0) {
+                    const landmarks = result.landmarks[0];
+                    isHandPresent = true;
+                    drawSkeleton(ctx, landmarks, canvas.width, canvas.height);
+                    handleGesture(landmarks);
+                } else {
+                    isHandPresent = false;
                 }
             }
-            requestAnimationFrame(detectLoop);
+            requestAnimationFrame(() => predictWebcam(handLandmarker, video));
+        }
+        
+        function drawSkeleton(ctx, landmarks, w, h) {
+            ctx.lineWidth = 3; ctx.strokeStyle = '#00ff88'; ctx.fillStyle = '#ff0044';
+            const connections = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+            ctx.beginPath();
+            for (let i = 0; i < connections.length; i++) {
+                const start = landmarks[connections[i][0]], end = landmarks[connections[i][1]];
+                ctx.moveTo(start.x * w, start.y * h); ctx.lineTo(end.x * w, end.y * h);
+            }
+            ctx.stroke();
+            for(let i=0; i<landmarks.length; i++) {
+                ctx.beginPath(); ctx.arc(landmarks[i].x * w, landmarks[i].y * h, 4, 0, 2 * Math.PI); ctx.fill();
+            }
         }
 
-        function processGesture(lm) {
-            // Tính toán cử chỉ
-            const thumbTip = lm[4];
-            const indexTip = lm[8];
-            const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
-            const isPinch = pinchDist < 0.05;
+        function handleGesture(landmarks) {
+            const palmX = 1 - (landmarks[0].x + landmarks[9].x) / 2;
+            const palmY = (landmarks[0].y + landmarks[9].y) / 2;
+            handPos.x = handPos.x * 0.8 + palmX * 0.2;
+            handPos.y = handPos.y * 0.8 + palmY * 0.2;
 
-            // Đếm ngón tay gập (để xác định nắm tay)
-            const wrist = lm[0];
-            const tips = [8, 12, 16, 20];
             let folded = 0;
-            tips.forEach(idx => {
-                const d = Math.hypot(lm[idx].x - wrist.x, lm[idx].y - wrist.y);
-                if(d < 0.25) folded++;
+            [8,12,16,20].forEach(i => { 
+                const d = Math.sqrt(Math.pow(landmarks[i].x-landmarks[0].x,2) + Math.pow(landmarks[i].y-landmarks[0].y,2));
+                if(d < 0.35) folded++; 
             });
-            const isFist = folded >= 3;
+            const dPinch = Math.sqrt(Math.pow(landmarks[4].x-landmarks[8].x,2) + Math.pow(landmarks[4].y-landmarks[8].y,2));
+            
+            const isPinch = dPinch < 0.1;
+            const isFist = folded >= 4;
+            const isOpen = !isFist && !isPinch;
 
             const status = document.getElementById('status-text');
 
-            if(isPinch) {
-                // CHẾ ĐỘ ZOOM
-                if(currentState !== STATE.ZOOM && photoMeshes.length > 0) {
-                    // Tìm ảnh gần camera nhất
-                    let minD = Infinity;
-                    let bestIdx = -1;
-                    const camPos = camera.position;
-                    const worldPos = new THREE.Vector3();
+            if (isPinch && currentState === STATE.SCATTER) {
+                if (photoMeshes.length > 0) {
+                    targetState = STATE.ZOOM;
+                    currentState = STATE.ZOOM;
+                    status.innerHTML = "Trạng thái: <span style='color:#ffd700'>Đang xem ảnh</span>";
                     
-                    photoMeshes.forEach((m, i) => {
-                        m.getWorldPosition(worldPos);
-                        const d = worldPos.distanceTo(camPos);
-                        if(d < minD) { minD = d; bestIdx = i; }
-                    });
-                    
-                    if(bestIdx !== -1) {
+                    if (zoomTargetIndex === -1 && photoMeshes.length > 0) {
+                        let minDist = Infinity;
+                        let bestIdx = 0;
+                        const camPos = camera.position;
+                        const worldPos = new THREE.Vector3();
+
+                        photoMeshes.forEach((mesh, idx) => {
+                            mesh.getWorldPosition(worldPos);
+                            const d = worldPos.distanceTo(camPos);
+                            if (d < minDist) {
+                                minDist = d;
+                                bestIdx = idx;
+                            }
+                        });
                         zoomTargetIndex = bestIdx;
-                        currentState = STATE.ZOOM;
-                        status.innerHTML = "Trạng thái: <span style='color:#ffd700'>ZOOM ẢNH</span>";
                     }
+                } else {
+                    status.innerHTML = "Trạng thái: <span style='color:#aaa'>Vui lòng tải ảnh lên trước</span>";
                 }
-            } 
-            else if(isFist) {
-                // CHẾ ĐỘ CÂY THÔNG
+            } else if (isFist) {
                 currentState = STATE.TREE;
-                status.innerHTML = "Trạng thái: <span style='color:#00ff00'>CÂY THÔNG</span>";
-            } 
-            else {
-                // CHẾ ĐỘ PHÂN TÁN (Mặc định khi mở tay)
-                if(currentState !== STATE.ZOOM) { // Nếu đang zoom thì phải mở tay dứt khoát mới thoát
-                     currentState = STATE.SCATTER;
-                     status.innerHTML = "Trạng thái: <span style='color:#00aaff'>PHÂN TÁN</span>";
+                zoomTargetIndex = -1;
+                rotationVelocity.x = 0;
+                rotationVelocity.y = 0;
+                status.innerHTML = "Trạng thái: <span style='color:#00ff00'>Tụ thành cây thông</span>";
+            } else if (isOpen) {
+                if(currentState === STATE.ZOOM && !isPinch) {
+                    currentState = STATE.SCATTER;
+                    zoomTargetIndex = -1;
+                } else if (currentState === STATE.TREE) {
+                    currentState = STATE.SCATTER;
+                    lastHandPos.x = handPos.x;
+                    lastHandPos.y = handPos.y;
                 }
+                status.innerHTML = "Trạng thái: <span style='color:#00aaff'>Phân tán</span>";
             }
         }
 
-        function drawSkeleton(ctx, landmarks) {
-            ctx.fillStyle = '#00ff00';
-            landmarks.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x * 640, p.y * 480, 3, 0, 2*Math.PI);
-                ctx.fill();
+        function onWindowResize() {
+            const dims = updateDimensions();
+            camera.aspect = dims.width / dims.height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(dims.width, dims.height);
+            composer.setSize(dims.width, dims.height);
+            composer.passes[1].resolution.set(dims.width, dims.height);
+        }
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (!files.length) return;
+            for(let i=0; i<files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const base64 = evt.target.result;
+                    uploadedImages.push(base64);
+                    const img = new Image();
+                    img.src = base64;
+                    img.onload = () => { addPhotoMesh(img); }
+                }
+                reader.readAsDataURL(files[i]);
+            }
+            document.getElementById('share-btn').style.display = 'block';
+            alert(`Đã thêm ${files.length} ảnh vào cây thông!`);
+        });
+
+        function addPhotoMesh(img) {
+            const tex = new THREE.Texture(img);
+            tex.needsUpdate = true;
+            tex.colorSpace = THREE.SRGBColorSpace;
+            let w = 4, h = 4;
+            if(img.width > img.height) h = 4 * (img.height/img.width);
+            else w = 4 * (img.width/img.height);
+
+            const geo = new THREE.PlaneGeometry(w, h);
+            const mat = new THREE.MeshBasicMaterial({ 
+                map: tex, 
+                side: THREE.DoubleSide, 
+                color: 0xcccccc 
             });
+            const mesh = new THREE.Mesh(geo, mat);
+            
+            const frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.2, h+0.2, 0.1), new THREE.MeshPhysicalMaterial({color:0xffd700, roughness:0.2, metalness:1}));
+            frame.position.z = -0.06;
+            mesh.add(frame);
+
+            const h_pos = (Math.random() - 0.5) * CONFIG.treeHeight;
+            const normH = (h_pos + CONFIG.treeHeight/2) / CONFIG.treeHeight;
+            const maxR = CONFIG.maxRadius * (1 - normH);
+            
+            const r = maxR * (0.3 + 0.6 * Math.sqrt(Math.random()));
+            const theta = Math.random() * Math.PI * 2;
+            
+            const treePos = new THREE.Vector3(r * Math.cos(theta), h_pos, r * Math.sin(theta));
+            const scatterPos = randomSpherePoint(50);
+
+            mesh.userData = { treePos, scatterPos, baseRot: new THREE.Euler(0, Math.random()*Math.PI, 0) };
+            mesh.position.copy(treePos);
+            photoMeshes.push(mesh);
+            mainGroup.add(mesh);
         }
 
-        // --- Main Loop ---
-        function animateLoop() {
-            requestAnimationFrame(animateLoop);
-            updateScene();
-            composer.render();
+        let uploadedImages = [];
+
+        // ImgBB API Configuration
+        const IMGBB_API_KEY = 'fd742c3948f8cf8f60e57cb4229df53d'; 
+
+        // Generate Share Link with Firebase
+        window.generateShareLink = async function() {
+            if (uploadedImages.length === 0) {
+                alert('Bạn chưa tải ảnh nào lên!');
+                return;
+            }
+
+            const btn = document.getElementById('share-btn');
+            btn.innerText = 'Đang tạo...';
+            btn.disabled = true;
+
+            try {
+                // 1. Upload images to ImgBB
+                const imageUrls = [];
+                for (let i = 0; i < uploadedImages.length; i++) {
+                    const base64Image = uploadedImages[i].split(',')[1]; // Remove header
+                    const formData = new FormData();
+                    formData.append("image", base64Image);
+
+                    const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                        method: "POST",
+                        body: formData
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        imageUrls.push(result.data.url);
+                    } else {
+                        console.error('Failed to upload image:', result.error);
+                    }
+                }
+
+                if (imageUrls.length === 0) {
+                    throw new Error('Failed to upload any images');
+                }
+
+                // 2. Save image URLs to Firebase
+                const docRef = await addDoc(collection(db, "shares"), {
+                    images: imageUrls,
+                    timestamp: new Date()
+                });
+
+                // 3. Generate Share Link with Firestore Document ID
+                const shareUrl = window.location.href.split('?')[0] + '?share=' + docRef.id;
+                document.getElementById('share-url').value = shareUrl;
+                document.getElementById('share-modal').classList.add('show');
+
+            } catch (e) {
+                alert('Tạo link thất bại: ' + e.message);
+                console.error(e);
+            }
+
+            btn.innerText = 'Tạo Link Chia Sẻ';
+            btn.disabled = false;
+        };
+
+        // Load images from Firebase using Share ID
+        async function loadFromShare() {
+            const params = new URLSearchParams(window.location.search);
+            const shareId = params.get('share');
+            if (!shareId) return false;
+
+            document.getElementById('canvas-wrapper').classList.add('hide-ui');
+            document.getElementById('loading').innerText = '🎁 Món quà đang tới...';
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const docRef = doc(db, "shares", shareId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.images && data.images.length > 0) {
+                        for (const url of data.images) {
+                            const img = new Image();
+                            img.crossOrigin = "Anonymous";
+                            img.src = url;
+                            await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+                            addPhotoMesh(img);
+                        }
+                        document.getElementById('loading').style.display = 'none';
+                        return true;
+                    }
+                } else {
+                    console.log("No such document!");
+                }
+            } catch (e) {
+                console.error('Lỗi tải ảnh chia sẻ:', e);
+            }
+            return false;
         }
 
-        // --- Start ---
-        initThree();
-        setupAI();
-        loadFromDatabase(); // Check URL ID
-        animateLoop();
-
-        // Music Trigger
-        function playMusic() { 
-            const m = document.getElementById('bg-music');
-            m.volume = 0.5;
-            m.play().catch(()=>{}); 
+        function playMusic() {
+            const music = document.getElementById('bg-music');
+            music.volume = 0.5;
+            music.play().catch(() => {});
         }
-        document.body.addEventListener('click', playMusic);
-        document.body.addEventListener('touchstart', playMusic);
 
+        document.addEventListener('click', playMusic, { once: true });
+        document.addEventListener('touchstart', playMusic, { once: true });
+
+        async function init() {
+            const cameraPromise = setupMediaPipe();
+            initThree();
+            animate();
+
+            const isShare = await loadFromShare();
+            if (isShare) {
+                document.getElementById('status-text').innerText = 'Chế độ xem quà tặng';
+            }
+
+            await cameraPromise;
+        }
+
+        init();
     </script>
 </body>
 </html>
