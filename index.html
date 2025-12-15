@@ -204,7 +204,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- Cấu hình ---
+        // --- Cấu hình Catbox ---
+        const CATBOX_USER_HASH = 'd282815575db64248b48063cb';
+        const CORS_PROXY = 'https://corsproxy.io/?'; 
+
+        // --- Cấu hình 3D ---
         const CONFIG = {
             goldCount: 600,     // Hạt vàng
             silverCount: 600,   // Hạt bạc
@@ -685,6 +689,9 @@
             composer.passes[1].resolution.set(dims.width, dims.height);
         }
 
+        // --- Logic Upload & Share (Catbox + Firebase) ---
+        let uploadedImages = []; 
+
         document.getElementById('file-input').addEventListener('change', function(e) {
             const files = e.target.files;
             if (!files.length) return;
@@ -692,7 +699,7 @@
                 const reader = new FileReader();
                 reader.onload = function(evt) {
                     const base64 = evt.target.result;
-                    uploadedImages.push(base64);
+                    uploadedImages.push(files[i]); // Store file object for Catbox upload
                     const img = new Image();
                     img.src = base64;
                     img.onload = () => { addPhotoMesh(img); }
@@ -739,12 +746,6 @@
             mainGroup.add(mesh);
         }
 
-        let uploadedImages = [];
-
-        // ImgBB API Configuration
-        const IMGBB_API_KEY = 'fd742c3948f8cf8f60e57cb4229df53d'; 
-
-        // Generate Share Link with Firebase
         window.generateShareLink = async function() {
             if (uploadedImages.length === 0) {
                 alert('Bạn chưa tải ảnh nào lên!');
@@ -755,38 +756,41 @@
             btn.innerText = 'Đang tạo...';
             btn.disabled = true;
 
-            try {
-                // 1. Upload images to ImgBB
-                const imageUrls = [];
-                for (let i = 0; i < uploadedImages.length; i++) {
-                    const base64Image = uploadedImages[i].split(',')[1]; // Remove header
-                    const formData = new FormData();
-                    formData.append("image", base64Image);
+            const uploadedUrls = [];
 
-                    const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                        method: "POST",
+            try {
+                // 1. Upload to Catbox via Proxy
+                for (let i = 0; i < uploadedImages.length; i++) {
+                    const file = uploadedImages[i];
+                    const formData = new FormData();
+                    formData.append('reqtype', 'fileupload');
+                    formData.append('userhash', CATBOX_USER_HASH);
+                    formData.append('fileToUpload', file);
+
+                    const response = await fetch(CORS_PROXY + 'https://catbox.moe/user/api.php', {
+                        method: 'POST',
                         body: formData
                     });
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        imageUrls.push(result.data.url);
+
+                    if (response.ok) {
+                        const url = await response.text();
+                        uploadedUrls.push(url.trim());
                     } else {
-                        console.error('Failed to upload image:', result.error);
+                        console.error('Failed to upload image to Catbox');
                     }
                 }
 
-                if (imageUrls.length === 0) {
+                if (uploadedUrls.length === 0) {
                     throw new Error('Failed to upload any images');
                 }
 
-                // 2. Save image URLs to Firebase
+                // 2. Save URLs to Firebase
                 const docRef = await addDoc(collection(db, "shares"), {
-                    images: imageUrls,
+                    images: uploadedUrls,
                     timestamp: new Date()
                 });
 
-                // 3. Generate Share Link with Firestore Document ID
+                // 3. Generate Link with ID
                 const shareUrl = window.location.href.split('?')[0] + '?share=' + docRef.id;
                 document.getElementById('share-url').value = shareUrl;
                 document.getElementById('share-modal').classList.add('show');
@@ -800,7 +804,6 @@
             btn.disabled = false;
         };
 
-        // Load images from Firebase using Share ID
         async function loadFromShare() {
             const params = new URLSearchParams(window.location.search);
             const shareId = params.get('share');
